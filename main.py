@@ -6,7 +6,6 @@ import glob
 import os
 
 path = os.environ.get('PROJECT_PATH', '.')
-
 app = FastAPI()
 files_path = os.path.join(f'{path}/data/models', '*')
 files = sorted(glob.iglob(files_path), key=os.path.getctime, reverse=True)
@@ -56,10 +55,7 @@ def version():
 def predict(form: Form):
     df = pandas.DataFrame.from_dict([form.dict()])
     y = model['model'].predict(df)
-    print(y[0])
     return {
-        'id': form.client_id,
-        'result': y[0]
-    }
-
+        'id': df.client_id,
+        'result': y[0]}
 

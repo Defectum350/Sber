@@ -13,11 +13,6 @@ from xgboost import XGBClassifier
 from sklearn.model_selection import RepeatedStratifiedKFold
 from sklearn.model_selection import cross_val_score
 
-# Укажем путь к файлам проекта:
-# -> $PROJECT_PATH при запуске в Fast api
-# -> иначе - текущая директория при локальном запуске
-path = os.environ.get('PROJECT_PATH', '.')
-
 
 def merge_two_df(df: pandas.DataFrame, df2: pandas.DataFrame) -> pandas.DataFrame:
     df_all = df.merge(df2[['event_action', 'session_id']], on='session_id', how='outer')
@@ -90,6 +85,7 @@ def visit_time(df: pandas.DataFrame) -> pandas.DataFrame:
 
 def city_category(df: pandas.DataFrame) -> pandas.DataFrame:
     import pandas
+    path = os.environ.get('PROJECT_PATH', '..')
     city = pandas.read_csv(f'{path}/data/city/csvData.csv')
     huge_cities = city.query('Population >= 5000000')['Name'].tolist()
     big_cities = city.query('5000000 > Population >= 1000000')['Name'].tolist()
@@ -126,6 +122,7 @@ def drop_column(df: pandas.DataFrame) -> pandas.DataFrame:
 
 
 def pipeline() -> None:
+    path = os.environ.get('PROJECT_PATH', '..')
     df_hit = pandas.read_csv(f'{path}/data/train/ga_hits.csv', low_memory=False)
     df_ses = pandas.read_csv(f'{path}/data/train/ga_sessions.csv', low_memory=False)
     numerical_transformer = Pipeline(steps=[
@@ -188,10 +185,10 @@ def pipeline() -> None:
         ('classifier', model)
     ])
 
-    cv = RepeatedStratifiedKFold(n_splits=5, n_repeats=2, random_state=42)
+    cv = RepeatedStratifiedKFold(n_splits=3, n_repeats=1, random_state=42)
     score = cross_val_score(pipe, X, y, cv=cv, scoring='roc_auc', n_jobs=-1)
     pipe.fit(X, y)
-    print(f'XGBClassifier: , roc_auc: {score.mean():.4f}')
+    logging.info(f'XGBClassifier: , roc_auc: {score.mean():.4f}')
     model_with_metadata = {'model': pipe,
                            'metadata': {
                                'name': 'Client Sber prediction model',
